@@ -1,0 +1,43 @@
+name: example
+program: main_example.py
+method: grid
+metric:
+  name: val_auprc
+  goal: maximize
+parameters:
+  optimizer: 
+    values: ["sgd", "adam"] 
+  wandb_project_name: 
+    value: example_sweep
+  gpus: 
+    value: 2
+  distributed_backend:
+    value: "dp"
+  lr:
+    value:  0.0002
+  trial_name:
+    value: "example"
+  auto_lr_find:
+    value: "lr"
+  n_classes:
+    value: 234
+  momentum:
+    value: 0.85
+  weight_decay:
+    value: 0.001
+  min_epochs: 
+    value: 0
+  max_epochs: 
+    value: 5
+  num_workers: 
+    value: 16
+  val_check_interval:
+    value: 0.01
+  batch_size: 
+    value: 32
+  benchmark:
+    value: True
+  deterministic:
+    value: True
+  precision:
+    value: 16

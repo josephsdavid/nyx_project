@@ -29,7 +29,7 @@ def set_optimizer(opt, model):
 
 
 
-def set_schedule(obj, optim):
+def set_schedule(obj, optimizer):
         # Set scheduler
         if obj.hparams.scheduler == "warmup":
 
@@ -40,18 +40,18 @@ def set_schedule(obj, optim):
                     return 0.01 * (1 - epoch / 200.0) ** 0.9
                 return 0.01
 
-            scheduler = optim.lr_scheduler.LambdaLR(optim, lambda_lr)
-            return optim, scheduler
+            scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda_lr)
+            return optimizer, scheduler
         elif obj.hparams.scheduler == "cos":
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optim, T_max=10)
-            return optim, scheduler
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
+            return optimizer, scheduler
         elif obj.hparams.scheduler == "plateau":
             data_len = len(obj.train_dataloader())
             val_timing = data_len * obj.hparams.val_check_interval
             scheduler = {
                 # patience = every 2 val epochs
                 "scheduler": optim.lr_scheduler.ReduceLROnPlateau(
-                    optim, factor=0.9, patience=val_timing * 5, min_lr=1e-5
+                    optimizer, factor=0.9, patience=val_timing * 5, min_lr=1e-5
                 ),
                 "reduce_on_plateau": True,
                 "monitor": "val_checkpoint_on",
@@ -59,7 +59,7 @@ def set_schedule(obj, optim):
                 "frequency": 1,  # idk if this is working
                 "name": "learning_rate",
             }
-            return [optim], [scheduler]
+            return [optimizer], [scheduler]
         else:
-            return optim
+            return optimizer
 

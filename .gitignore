@@ -2,3 +2,5 @@ venv/
 .ropeproject/
 __pycache__/
 *.npy
+ckpts/
+result/*

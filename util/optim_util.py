@@ -2,7 +2,6 @@ import math
 import numpy as np
 import torch.optim as optim
 
-from constants   import *
 
 
 def set_optimizer(opt, model):
@@ -54,7 +53,7 @@ def set_schedule(obj, optimizer):
                     optimizer, factor=0.9, patience=val_timing * 5, min_lr=1e-5
                 ),
                 "reduce_on_plateau": True,
-                "monitor": "val_checkpoint_on",
+                "monitor": "val_loss",
                 "interval": "step",
                 "frequency": 1,  # idk if this is working
                 "name": "learning_rate",

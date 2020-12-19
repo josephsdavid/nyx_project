@@ -5,13 +5,14 @@ import numpy as np
 class moviedataset(torch.utils.data.Dataset):
     def __init__(self, split="train"):
         super().__init__()
-        csv = f"{split}.csv"
-        self.data = torch.from_numpy(np.genfromtxt(csv))
+        path = f"dataset/data/{split}.npy"
+        self.data = torch.from_numpy(np.load(path)).float()
+        print(self.data.shape)
 
     def __len__(self):
         return self.data.shape[0]
 
-    def __getitem(self, idx):
+    def __getitem__(self, idx):
         return self.data[idx, :]
 
 

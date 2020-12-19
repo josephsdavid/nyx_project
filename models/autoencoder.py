@@ -3,33 +3,42 @@ import torch
 import torch.functional as F
 
 class AutoEncoder(nn.Module):
-    def __init__(self, latent_dim = 256, outer_dim = 2048, shrink_factor = 2,input_dim = 162506) :
+    def __init__(self, latent_dim = 256, input_dim = 28038) :
         super().__init__()
-        assert outer_dim // latent_dim % shrink_factor == 0
 
-        self.shrink_factor = shrink_factor
-        self.encoder_layers = []
-        self.encoder_layers.append(nn.Linear(input_dim, outer_dim))
-        for i in range(outer_dim // latent_dim / shrink_factor -1 ):
-            self.encoder.layers.append(nn.Linear(outer_dim // (2**i), outer_dim // (2** (i + 1))))
-        self.decoder_layers = []
-        for i in range(outer_dim // latent_dim / shrink_factor -1 , -1):
-            self.decoder.layers.append(nn.Linear(outer_dim // (2**i+1), outer_dim // (2** (i))))
-        self.decoder_layers.append(nn.Linear(outer_dim // (2**i), input_dim))
+        self.encoder1 = nn.Linear(input_dim, 500)
+        self.encoder2 = nn.Linear(500, 500)
+        self.encoder3 = nn.Linear(500, 2000)
+        self.encoder4 = nn.Linear(2000, latent_dim)
+
+        self.decoder1 = nn.Linear(latent_dim,2000)
+        self.decoder2 = nn.Linear(2000, 500)
+        self.decoder3 = nn.Linear(500, 500)
+        self.decoder4 = nn.Linear(500, input_dim)
+
         self.relu = nn.ReLU()
 
-    def forward(self, x):
-        for layer in self.encoder_layers:
-            x = layer(x)
-            x = self.relu(x)
 
+    def forward(self, x):
+        x = self.encoder1(x)
+        x = self.relu(x)
+        x = self.encoder2(x)
+        x = self.relu(x)
+        x = self.encoder3(x)
+        x = self.relu(x)
+        x = self.encoder4(x)
+        x = self.relu(x)
         encoded = x
         decoded = encoded
+        decoded = self.decoder1(decoded)
+        decoded = self.relu(decoded)
+        decoded = self.decoder2(decoded)
+        decoded = self.relu(decoded)
+        decoded = self.decoder3(decoded)
+        decoded = self.relu(decoded)
+        decoded = self.decoder4(decoded)
 
-        for i, layer in enumerate(self.decoder_layers):
-            decoded = layer(decoded)
-            if i != (len(self.decoder_layers) -1):
-                decoded = self.relu(x)
+
         return encoded, decoded # worry about the sign stuff in the training and validation steps
 
 

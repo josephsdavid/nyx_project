@@ -9,17 +9,21 @@ from dataset import get_dataloader
 from models import AutoEncoder
 
 
-class ExampleModel(pl.LightningModule):
+class AutoencoderModel(pl.LightningModule):
     def __init__(self, hparams):
         super().__init__()
+        self.val_dict = {}
+        self.train_losses=[]
         self.hparams = hparams
         self.hparams["tpu_cores"] = 0
         self.loss = self.get_loss_fn()
         # you can get fancier here of course, we will likely have a separate
         # class for the model
         self.model = AutoEncoder(
-            hparams["latent_dim"], hparams["outer_dim"], hparams["shrink_factor"]
+            self.hparams["latent_dim"]
         )
+        print(self.model)
+        print(self.model.parameters())
 
     def forward(self, inputs):
         output = self.model(inputs)
@@ -31,15 +35,33 @@ class ExampleModel(pl.LightningModule):
         _, preds = self.model(x)
         preds = preds * sign
         loss = self.loss(preds, x)
-        self.log("train_loss", loss)
+        self.train_losses.append(loss.detach().cpu().item())
+        self.log(
+                "train_loss",
+                loss,
+                on_epoch=True,
+                on_step=True,
+                logger=True,
+                prog_bar=True,
+                )
+
         return loss
+
+    def training_epoch_end(self, training_result):
+        self.log(
+                "epoch_train_loss",
+                sum(self.train_losses)/len(self.train_losses),
+                on_epoch=True,
+                logger=True,
+                )
+        self.train_losses = []
 
     def validation_step(self, batch, batch_idx):
         x = batch
         sign = torch.sign(x)
         _, preds = self.model(x)
         loss = self.loss(preds * sign, x)
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, on_epoch=True, on_step=False, )
         for n in [1, 5, 10, 20]:
             x_mask = x.clone().detach()
             for i in range(x_mask.shape[0]):
@@ -50,11 +72,17 @@ class ExampleModel(pl.LightningModule):
                     x_mask[i, :][torch.where(x_mask[i, :] > 0)[-n:]] = 0
             _, preds = self.model(x_mask)
             loss = self.loss(preds * sign, x)
-            self.log(f"val_last_{n}_loss", loss)
+            self.log(f"val_last_{n}_loss", loss, on_epoch=True, on_step=False, )
+            self.val_dict.setdefault(f"val_last_{n}_loss", []).append(loss.detach().cpu().item())
 
-        def get_loss_fn(self):
-            loss = nn.MSELoss()
-            return loss
+    def validation_epoch_end(self, validation_result):
+        for k, v in self.val_dict.items():
+            self.log(f"epoch_{k}", sum(v) / len(v), on_epoch=True, logger=True)
+        self.val_dict = {}
+
+    def get_loss_fn(self):
+        loss = nn.MSELoss()
+        return loss
 
     def configure_optimizers(self):
         if self.hparams["optimizer"] == "Adam":
@@ -70,10 +98,10 @@ class ExampleModel(pl.LightningModule):
         return util.set_schedule(self, optim)
 
     def __dataloader(self, split):
-        return get_dataloader(split)
+        return get_dataloader(split, self.hparams)
 
     def val_dataloader(self):
-        return self.__dataloader("valid", self.hparams)
+        return self.__dataloader("valid")
 
     def train_dataloader(self):
         return self.__dataloader("train")
@@ -85,5 +113,5 @@ class ExampleModel(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--latent_dim", type=int, default=256)
-        parser.add_argument("--outer_dim", type=int, default=2048)
-        parser.add_argument("--shrink_factor", type=int, default=2)
+        parser.add_argument("--scheduler", type=str, default="none")
+        return parser

@@ -1,0 +1,5 @@
+[default]
+entity = nyx_project
+project = project_nyx
+base_url = https://api.wandb.ai
+

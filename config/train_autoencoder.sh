@@ -20,3 +20,5 @@ python3 main_ae.py --trial_name example \
 	--max_epochs 1000 \
 	--min_epochs 100 \
 	--val_check_interval 0.5 \
+	--reduction mean \
+	--dense True \

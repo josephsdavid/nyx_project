@@ -81,8 +81,12 @@ class AutoencoderModel(pl.LightningModule):
         self.val_dict = {}
 
     def get_loss_fn(self):
-        loss = nn.MSELoss()
-        return loss
+        if self.hparams['reduction'] == "sum":
+            loss = nn.MSELoss(reduction='sum')
+        else:
+            loss = nn.MSELoss()
+        final_loss = loss
+        return final_loss
 
     def configure_optimizers(self):
         if self.hparams["optimizer"] == "Adam":
@@ -114,4 +118,5 @@ class AutoencoderModel(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--latent_dim", type=int, default=256)
         parser.add_argument("--scheduler", type=str, default="none")
+        parser.add_argument("--reduction", type=str, default="mean")
         return parser

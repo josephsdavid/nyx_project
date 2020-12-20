@@ -11,7 +11,7 @@ seed_everything(6)
 
 def main(args):
     logger = pl_loggers.WandbLogger(experiment=None, save_dir=None)
-    checkpoint_callback = ModelCheckpoint(dirpath="ckpts/", monitor="val_loss")
+    checkpoint_callback = ModelCheckpoint(dirpath=f"ckpts/{args.reduction}_reduction/", monitor="val_loss")
     model = AutoencoderModel(args)
     lr_logger = LearningRateMonitor()
     trainer = Trainer.from_argparse_args(
